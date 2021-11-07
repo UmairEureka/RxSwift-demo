@@ -1,0 +1,6 @@
+framework module Pods_RxMVVM_TMDB {
+  umbrella header "Pods-RxMVVM-TMDB-umbrella.h"
+
+  export *
+  module * { export * }
+}
