@@ -55,30 +55,39 @@ class ApiServices {
         }
     }
     
-    func getMovieDetail(_ movieID: Int, completion: @escaping (MovieDetail) -> ()) {
+    func getMovieDetail(_ movieID: Int) -> Observable<MovieDetail> {
         
-//        let session = URLSession.shared
-//        let url = Constants.movieDetailUrl+String(movieID)
-//        let request = buildRequest(url: url, params: [])
-//
-//        session.dataTask(with: request) { data, response, error in
-//
-//            guard let data = data, error == nil, let response = response as? HTTPURLResponse else { return }
-//
-//            if 200..<300 ~= response.statusCode {
-//                do {
-//                    let decoder = JSONDecoder()
-//                    let movie = try decoder.decode(MovieDetail.self, from: data)
-//                    print("Response ==>")
-//                    print(movie.title)
-//                    completion(movie)
-//                } catch let error {
-//                    print("An Error : \(error.localizedDescription)")
-//                }
-//            } else {
-//                print("Api fail with status code: \(response.statusCode)")
-//            }
-//        }.resume()
+        return Observable.create { [weak self] observer in
+            
+            let session = URLSession.shared
+            let url = Constants.movieDetailUrl+String(movieID)
+            let request = self?.buildRequest(url: url, params: [])
+
+            session.dataTask(with: request!) { data, response, error in
+
+                guard let data = data, error == nil, let response = response as? HTTPURLResponse else { return }
+
+                if 200..<300 ~= response.statusCode {
+                    do {
+                        let decoder = JSONDecoder()
+                        let movie = try decoder.decode(MovieDetail.self, from: data)
+                        
+                        observer.onNext(movie)
+                        
+                    } catch let error {
+                        print("An Error : \(error)")
+                        observer.onError(error)
+                    }
+                } else {
+                    print("Api fail with status code: \(response.statusCode)")
+                }
+                observer.onCompleted()
+            }.resume()
+            
+            return Disposables.create {
+                session.finishTasksAndInvalidate()
+            }
+        }
     }
     
     private func buildRequest(method: String = "GET", url: String, params: [(String, String)]) -> URLRequest {

@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import RxSwift
 
 class MovieDetailsViewController: UIViewController {
 
@@ -20,6 +21,7 @@ class MovieDetailsViewController: UIViewController {
     private var router = DetailRouter()
     private var viewmodel = MovieDetailViewModel()
     private var movieM :MovieDetail?
+    private var bag = DisposeBag()
     
     var movieID: Int?
     
@@ -30,11 +32,15 @@ class MovieDetailsViewController: UIViewController {
     }
     
     func getMovieDetailData(){
-        viewmodel.getDetailData(movieID: movieID ?? 0) { [weak self] movieM in
-            self?.movieM = movieM
-            let detailVM = DetailViewModel(with: movieM)
-            self?.setupViewData(movie: detailVM)
-        }
+        
+        viewmodel.movieDetail
+            .subscribe(onNext: { [weak self] object in
+                let detailVM = DetailViewModel(with: object)
+                self?.setupViewData(movie: detailVM)
+            })
+            .disposed(by: bag)
+        
+        viewmodel.getDetailData(movieID: movieID ?? 0)
     }
     
     private func setupViewData(movie: DetailViewModel){

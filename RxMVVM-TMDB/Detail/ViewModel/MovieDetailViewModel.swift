@@ -6,18 +6,28 @@
 //
 
 import Foundation
+import RxSwift
+import RxCocoa
 
 class MovieDetailViewModel {
     
     private var apiServices = ApiServices()
     private var router: DetailRouter?
+    var movieDetail = PublishSubject<MovieDetail>()
+    var bag = DisposeBag()
     
     func bind(view: MovieDetailsViewController, router: DetailRouter){
         self.router = router
     }
     
-    func getDetailData(movieID: Int, completion: @escaping (MovieDetail)->()){
-        return apiServices.getMovieDetail(movieID, completion: completion)
+    func getDetailData(movieID: Int) {
+        return apiServices.getMovieDetail(movieID)
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [unowned self] object in
+                self.movieDetail.onNext(object)
+                self.movieDetail.onCompleted()
+            })
+            .disposed(by: bag)
     }
     
 }
@@ -37,13 +47,13 @@ class DetailViewModel {
     init(with model: MovieDetail) {
         self.genreIds = model.genres
         self.movieID = model.id
-        self.overview = model.overview
-        self.popularity = model.popularity
-        self.image = model.image
-        self.releaseDate = model.releaseDate
-        self.title = model.title
-        self.rating = String(format: "%.2f", model.voteAverage)
-        self.voteCount = model.voteCount
+        self.overview = model.overview ?? ""
+        self.popularity = model.popularity ?? 0.0
+        self.image = model.image ?? ""
+        self.releaseDate = model.releaseDate ?? ""
+        self.title = model.title ?? ""
+        self.rating = String(format: "%.2f", model.voteAverage ?? 0.0)
+        self.voteCount = model.voteCount ?? 0
     }
     
     var genreNames: [String] {

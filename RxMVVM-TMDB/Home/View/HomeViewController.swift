@@ -43,66 +43,41 @@ class HomeViewController : UIViewController {
         
         navigationItem.searchController = self.searchController
         searchController.isActive = true
+        viewModel.bind(view: self, router: HomeRouter())
     }
     
     func loadHomeData(query: String){
-//        self.activityView.isHidden = false
         viewModel.moviesList.bind(to:
                         tableView.rx.items(
                             cellIdentifier: MovieTableViewCell.nibName,
                             cellType: MovieTableViewCell.self)) { row, model, cell in
                                 cell.selectionStyle = .none
-                                let movieM = self.movies[row]
-                                let movieVM = MovieTableViewCellViewModel(with: movieM)
+                                let movieVM = MovieTableViewCellViewModel(with: model)
                                 cell.bind(to: movieVM)
                             }.disposed(by: bag)
         
+        tableView.rx.modelSelected(Movie.self)
+            .bind { [weak self] movie in
+                self?.viewModel.moveToDetail(movieID: movie.movieID ?? 0)
+            }
+            .disposed(by: bag)
         
-        
-//        viewModel.getHomeData(query, completion: { movies in
-//            DispatchQueue.main.async { [unowned self] in
-//                self.activityView.isHidden = true
-//                self.movies = movies
-//                viewModel.bind(view: self, router: HomeRouter())
-//                self.tableView.reloadData()
-//            }
-//        })
+        viewModel.getHomeData("")
     }
-    
-//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return self.movies.count
-//    }
-//
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-//
-//        //let cell = self.tableView.dequeueReusableCell(withIdentifier: "MovieTableViewCell") as! MovieTableViewCell
-//        let cell = self.tableView.dequeueReusableCell(withClass: MovieTableViewCell.self)!
-//        cell.selectionStyle = .none
-//        let movieM = self.movies[indexPath.row]
-//        let movieVM = MovieTableViewCellViewModel(with: movieM)
-//        cell.bind(to: movieVM)
-//        return cell
-//
-//    }
-//
-//    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let movieId = self.movies[indexPath.row].movieID ?? 0
-//        viewModel.moveToDetail(movieID: movieId)
-//    }
     
 }
 
 extension HomeViewController: UISearchBarDelegate {
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        loadHomeData(query: searchText)
+        
     }
     
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        loadHomeData(query: searchBar.searchTextField.text ?? "")
+        viewModel.getHomeData(searchBar.searchTextField.text ?? "")
     }
 
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        loadHomeData(query: "")
+        viewModel.getHomeData("")
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

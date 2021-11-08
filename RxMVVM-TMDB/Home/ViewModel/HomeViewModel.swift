@@ -18,9 +18,9 @@ class HomeViewModel {
     
     func getHomeData(_ query: String) {
         apiServices.getMovies(query)
+            .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [unowned self] movies in
                 self.moviesList.onNext(movies)
-                self.moviesList.onCompleted()
             })
             .disposed(by: bag)
     }
